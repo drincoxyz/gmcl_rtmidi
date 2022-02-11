@@ -1,6 +1,6 @@
 # gmod-midi
 
-This is a C++ module for [Garry's Mod](https://gmod.facepunch.com/) that provides realtime MIDI input / output to the in-game Lua API through the [RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/index.html C++ API.
+This is a C++ module for [Garry's Mod](https://gmod.facepunch.com/) that provides realtime MIDI input / output to the in-game Lua API through the [RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/index.html) C++ API.
 
 ## Download
 
