@@ -24,6 +24,7 @@ workspace "gmod-midi"
 
 	project "RtMidi"
 		kind  "StaticLib"
+		pic   "On"
 		files { "src/RtMidi.cpp" }
 
 		filter { "configurations:Debug" }
