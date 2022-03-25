@@ -372,25 +372,25 @@ LUA_FUNCTION(closeInputPort)
 		{
 			LUA->PushSpecial(SPECIAL_GLOB);
 				LUA->GetField(-1, "hook");
-						LUA->GetField(-1, "Run");
-							LUA->PushString("ShouldCloseMidiInputPort");
-						LUA->Call(1, 1);
-							if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
+					LUA->GetField(-1, "Run");
+						LUA->PushString("ShouldCloseMidiInputPort");
+					LUA->Call(1, 1);
+						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
+						{
+							inputApi->closePort();
+
+							if (!inputApi->isPortOpen())
 							{
-								inputApi->closePort();
+								LUA->GetField(-2, "Run");
+									LUA->PushString("OnMidiInputPortClosed");
+								LUA->Call(1, 0);
 
-								if (!inputApi->isPortOpen())
-								{
-									LUA->GetField(-2, "Run");
-										LUA->PushString("OnMidiInputPortClosed");
-									LUA->Call(1, 0);
+								LUA->PushBool(true);
 
-									LUA->PushBool(true);
-
-									return 1;
-								}
+								return 1;
 							}
-						LUA->Pop();
+						}
+					LUA->Pop();
 				LUA->Pop();
 			LUA->Pop();
 		}
@@ -519,25 +519,25 @@ LUA_FUNCTION(closeOutputPort)
 		{
 			LUA->PushSpecial(SPECIAL_GLOB);
 				LUA->GetField(-1, "hook");
-						LUA->GetField(-1, "Run");
-							LUA->PushString("ShouldCloseMidiOutputPort");
-						LUA->Call(1, 1);
-							if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
+					LUA->GetField(-1, "Run");
+						LUA->PushString("ShouldCloseMidiOutputPort");
+					LUA->Call(1, 1);
+						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
+						{
+							outputApi->closePort();
+
+							if (!outputApi->isPortOpen())
 							{
-								outputApi->closePort();
+								LUA->GetField(-2, "Run");
+									LUA->PushString("OnMidiOutputPortClosed");
+								LUA->Call(1, 0);
 
-								if (!outputApi->isPortOpen())
-								{
-									LUA->GetField(-2, "Run");
-										LUA->PushString("OnMidiOutputPortClosed");
-									LUA->Call(1, 0);
+								LUA->PushBool(true);
 
-									LUA->PushBool(true);
-
-									return 1;
-								}
+								return 1;
 							}
-						LUA->Pop();
+						}
+					LUA->Pop();
 				LUA->Pop();
 			LUA->Pop();
 		}
