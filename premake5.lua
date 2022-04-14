@@ -1,52 +1,75 @@
-workspace "gmod-midi"
-	language      "C++"
-	cppdialect    "C++latest"
-	startproject  "midi"
-	floatingpoint "Fast"
+local api_allowed = {
+	{ "winmm", "Windows Multimedia" },
+	{ "jack",  "JACK Audio Connection Kit" },
+	{ "alsa",  "Advanced Linux Sound Architecture" },
+	{ "core",  "Apple Core Audio" },
+}
 
+local api_default = {
+	windows = "winmm",
+	linux   = "alsa",
+	macosx  = "core",
+}
+
+newoption {
+	trigger     = "api",
+	value       = "API",
+	allowed     = api_allowed,
+	default     = api_default[os.target()],
+	description = "Choose an API for RtMidi",
+}
+
+workspace "gmod-midi"
+	startproject   "gmod-midi"
+	cppdialect     "C++11"
+	language       "C++"
+	pic            "On"
 	includedirs    { "include" }
 	platforms      { "x86", "x86_64" }
 	configurations { "Debug", "Release" }
-
-	filter { "configurations:Debug" }
-		defines  { "DEBUG" }
-		symbols  "On"
-		optimize "Debug"
-	filter { "configurations:Release" }
-		defines  { "NDEBUG" }
-		symbols  "Off"
-		optimize "Speed"
 
 	filter { "platforms:x86" }
 		architecture "x86"
 	filter { "platforms:x86_64" }
 		architecture "x86_64"
 
+	filter { "configurations:Debug" }
+		runtime  "Debug"
+		optimize "Debug"
+		symbols  "On"
+		defines  { "DEBUG" }
+	filter { "configurations:Release" }
+		runtime  "Release"
+		optimize "Speed"
+		symbols  "Off"
+		defines  { "NDEBUG" }
+
 	project "RtMidi"
 		kind  "StaticLib"
-		pic   "On"
 		files { "src/RtMidi.cpp" }
 
 		filter { "configurations:Debug" }
 			defines { "__RTMIDI_DEBUG__" }
 
-		filter { "system:windows" }
-			links   { "winmm.lib" }
+		filter { "options:api=winmm" }
 			defines { "__WINDOWS_MM__" }
-		filter { "system:linux" }
-			links   { "asound", "pthread" }
+			links   { "winmm" }
+		filter "options:api=jack"
+			defines { "__UNIX_JACK__" }
+			links   { "jack" }
+		filter { "options:api=alsa" }
 			defines { "__LINUX_ALSA__" }
-		filter { "system:macosx" }
-			links   { "CoreMIDI.framework", "CoreAudio.framework", "CoreFoundation.framework" }
+			links   { "asound", "pthread" }
+		filter { "options:api=core" }
 			defines { "__MACOSX_CORE__" }
+			links   { "CoreMIDI.framework", "CoreAudio.framework", "CoreFoundation.framework" }
 
 	project "gmod-midi"
-		kind  "SharedLib"
-		links { "RtMidi" }
-		files { "src/gmod-midi.cpp" }
-		
-		targetname      "midi"
+		kind            "SharedLib"
+		files           { "src/gmod-midi.cpp" }
+		links           { "RtMidi" }
 		targetprefix    "gmcl_"
+		targetname      "midi"
 		targetextension ".dll"
 
 		filter { "system:windows", "platforms:x86" }
@@ -58,4 +81,4 @@ workspace "gmod-midi"
 		filter { "system:linux", "platforms:x86_64" }
 			targetsuffix "_linux64"
 		filter { "system:macosx" }
-			targetsuffix "_macosx"
+			targetsuffix "_osx"

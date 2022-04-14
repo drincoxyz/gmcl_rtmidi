@@ -1,600 +1,296 @@
+/*
+	gmod-midi: real-time MIDI I/O for Garry's Mod
+	Copyright (c) 2021-2022 Brandon Little
+
+	Redistribution and use in source and binary forms, with or without modification,
+	are permitted provided that the following conditions are met:
+
+	1. Redistributions of source code must retain the above copyright notice, this
+	   list of conditions and the following disclaimer.
+
+	2. Redistributions in binary form must reproduce the above copyright notice,
+	   this list of conditions and the following disclaimer in the documentation
+	   and/or other materials provided with the distribution.
+
+	3. Neither the name of the copyright holder nor the names of its contributors
+	   may be used to endorse or promote products derived from this software without
+	   specific prior written permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+	ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+	WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+	DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+	ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+	(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+	LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
+	ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+	(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
 #include <map>
 #include <cmath>
-#include <queue>
 #include <vector>
-#include <string>
 #include "RtMidi.h"
 #include "GarrysMod/Lua/Interface.h"
 
 using namespace std;
 using namespace GarrysMod::Lua;
 
-RtMidiIn*  inputApi;
-RtMidiOut* outputApi;
+RtMidiIn*  midi_in;
+RtMidiOut* midi_out;
 
-queue<vector<unsigned char>> inputMessages;
-
-const map<const unsigned char, const vector<const char*>> noteNames
+const map<unsigned char, const char*> message_name
 {
-	{   0, { "MIDI_NOTE_C_1" } },
-	{   1, { "MIDI_NOTE_Cs_1", "MIDI_NOTE_Db_1" } },
-	{   2, { "MIDI_NOTE_D_1" } },
-	{   3, { "MIDI_NOTE_Ds_1", "MIDI_NOTE_Eb_1" } },
-	{   4, { "MIDI_NOTE_E_1" } },
-	{   5, { "MIDI_NOTE_F_1" } },
-	{   6, { "MIDI_NOTE_Fs_1", "MIDI_NOTE_Gb_1" } },
-	{   7, { "MIDI_NOTE_G_1" } },
-	{   8, { "MIDI_NOTE_Gs_1", "MIDI_NOTE_Ab_1" } },
-	{   9, { "MIDI_NOTE_A_1" } },
-	{  10, { "MIDI_NOTE_As_1", "MIDI_NOTE_Bb_1" } },
-	{  11, { "MIDI_NOTE_B_1" } },
-	{  12, { "MIDI_NOTE_C0" } },
-	{  13, { "MIDI_NOTE_Cs0", "MIDI_NOTE_Db0" } },
-	{  14, { "MIDI_NOTE_D0" } },
-	{  15, { "MIDI_NOTE_Ds0", "MIDI_NOTE_Eb0" } },
-	{  16, { "MIDI_NOTE_E0" } },
-	{  17, { "MIDI_NOTE_F0" } },
-	{  18, { "MIDI_NOTE_Fs0", "MIDI_NOTE_Gb0" } },
-	{  19, { "MIDI_NOTE_G0" } },
-	{  20, { "MIDI_NOTE_Gs0", "MIDI_NOTE_Ab0" } },
-	{  21, { "MIDI_NOTE_A0" } },
-	{  22, { "MIDI_NOTE_As0", "MIDI_NOTE_Bb0" } },
-	{  23, { "MIDI_NOTE_B0" } },
-	{  24, { "MIDI_NOTE_C1" } },
-	{  25, { "MIDI_NOTE_Cs1", "MIDI_NOTE_Db1" } },
-	{  26, { "MIDI_NOTE_D1" } },
-	{  27, { "MIDI_NOTE_Ds1", "MIDI_NOTE_Eb1" } },
-	{  28, { "MIDI_NOTE_E1" } },
-	{  29, { "MIDI_NOTE_F1" } },
-	{  30, { "MIDI_NOTE_Fs1", "MIDI_NOTE_Gb1" } },
-	{  31, { "MIDI_NOTE_G1" } },
-	{  32, { "MIDI_NOTE_Gs1", "MIDI_NOTE_Ab1" } },
-	{  33, { "MIDI_NOTE_A1" } },
-	{  34, { "MIDI_NOTE_As1", "MIDI_NOTE_Bb1" } },
-	{  35, { "MIDI_NOTE_B1" } },
-	{  36, { "MIDI_NOTE_C2" } },
-	{  37, { "MIDI_NOTE_Cs2", "MIDI_NOTE_Db2" } },
-	{  38, { "MIDI_NOTE_D2" } },
-	{  39, { "MIDI_NOTE_Ds2", "MIDI_NOTE_Eb2" } },
-	{  40, { "MIDI_NOTE_E2" } },
-	{  41, { "MIDI_NOTE_F2" } },
-	{  42, { "MIDI_NOTE_Fs2", "MIDI_NOTE_Gb2" } },
-	{  43, { "MIDI_NOTE_G2" } },
-	{  44, { "MIDI_NOTE_Gs2", "MIDI_NOTE_Ab2" } },
-	{  45, { "MIDI_NOTE_A2" } },
-	{  46, { "MIDI_NOTE_As2", "MIDI_NOTE_Bb2" } },
-	{  47, { "MIDI_NOTE_B2" } },
-	{  48, { "MIDI_NOTE_C3" } },
-	{  49, { "MIDI_NOTE_Cs3", "MIDI_NOTE_Db3" } },
-	{  50, { "MIDI_NOTE_D3" } },
-	{  51, { "MIDI_NOTE_Ds3", "MIDI_NOTE_Eb3" } },
-	{  52, { "MIDI_NOTE_E3" } },
-	{  53, { "MIDI_NOTE_F3" } },
-	{  54, { "MIDI_NOTE_Fs3", "MIDI_NOTE_Gb3" } },
-	{  55, { "MIDI_NOTE_G3" } },
-	{  56, { "MIDI_NOTE_Gs3", "MIDI_NOTE_Ab3" } },
-	{  57, { "MIDI_NOTE_A3" } },
-	{  58, { "MIDI_NOTE_As3", "MIDI_NOTE_Bb3" } },
-	{  59, { "MIDI_NOTE_B3" } },
-	{  60, { "MIDI_NOTE_C4" } },
-	{  61, { "MIDI_NOTE_Cs4", "MIDI_NOTE_Db4" } },
-	{  62, { "MIDI_NOTE_D4" } },
-	{  63, { "MIDI_NOTE_Ds4", "MIDI_NOTE_Eb4" } },
-	{  64, { "MIDI_NOTE_E4" } },
-	{  65, { "MIDI_NOTE_F4" } },
-	{  66, { "MIDI_NOTE_Fs4", "MIDI_NOTE_Gb4" } },
-	{  67, { "MIDI_NOTE_G4" } },
-	{  68, { "MIDI_NOTE_Gs4", "MIDI_NOTE_Ab4" } },
-	{  69, { "MIDI_NOTE_A4" } },
-	{  70, { "MIDI_NOTE_As4", "MIDI_NOTE_Bb4" } },
-	{  71, { "MIDI_NOTE_B4" } },
-	{  72, { "MIDI_NOTE_C5" } },
-	{  73, { "MIDI_NOTE_Cs5", "MIDI_NOTE_Db5" } },
-	{  74, { "MIDI_NOTE_D5" } },
-	{  75, { "MIDI_NOTE_Ds5", "MIDI_NOTE_Eb5" } },
-	{  76, { "MIDI_NOTE_E5" } },
-	{  77, { "MIDI_NOTE_F5" } },
-	{  78, { "MIDI_NOTE_Fs5", "MIDI_NOTE_Gb5" } },
-	{  79, { "MIDI_NOTE_G5" } },
-	{  80, { "MIDI_NOTE_Gs5", "MIDI_NOTE_Ab5" } },
-	{  81, { "MIDI_NOTE_A5" } },
-	{  82, { "MIDI_NOTE_As5", "MIDI_NOTE_Bb5" } },
-	{  83, { "MIDI_NOTE_B5" } },
-	{  84, { "MIDI_NOTE_C6" } },
-	{  85, { "MIDI_NOTE_Cs6", "MIDI_NOTE_Db6" } },
-	{  86, { "MIDI_NOTE_D6" } },
-	{  87, { "MIDI_NOTE_Ds6", "MIDI_NOTE_Eb6" } },
-	{  88, { "MIDI_NOTE_E6" } },
-	{  89, { "MIDI_NOTE_F6" } },
-	{  90, { "MIDI_NOTE_Fs6", "MIDI_NOTE_Gb6" } },
-	{  91, { "MIDI_NOTE_G6" } },
-	{  92, { "MIDI_NOTE_Gs6", "MIDI_NOTE_Ab6" } },
-	{  93, { "MIDI_NOTE_A6" } },
-	{  94, { "MIDI_NOTE_As6", "MIDI_NOTE_Bb6" } },
-	{  95, { "MIDI_NOTE_B6" } },
-	{  96, { "MIDI_NOTE_C6" } },
-	{  97, { "MIDI_NOTE_Cs6", "MIDI_NOTE_Db6" } },
-	{  98, { "MIDI_NOTE_D6" } },
-	{  99, { "MIDI_NOTE_Ds6", "MIDI_NOTE_Eb6" } },
-	{ 100, { "MIDI_NOTE_E6" } },
-	{ 101, { "MIDI_NOTE_F6" } },
-	{ 102, { "MIDI_NOTE_Fs6", "MIDI_NOTE_Gb6" } },
-	{ 103, { "MIDI_NOTE_G6" } },
-	{ 104, { "MIDI_NOTE_Gs6", "MIDI_NOTE_Ab6" } },
-	{ 105, { "MIDI_NOTE_A6" } },
-	{ 106, { "MIDI_NOTE_As6", "MIDI_NOTE_Bb6" } },
-	{ 107, { "MIDI_NOTE_B6" } },
-	{ 108, { "MIDI_NOTE_C7" } },
-	{ 109, { "MIDI_NOTE_Cs7", "MIDI_NOTE_Db7" } },
-	{ 110, { "MIDI_NOTE_D7" } },
-	{ 111, { "MIDI_NOTE_Ds7", "MIDI_NOTE_Eb7" } },
-	{ 112, { "MIDI_NOTE_E7" } },
-	{ 113, { "MIDI_NOTE_F7" } },
-	{ 114, { "MIDI_NOTE_Fs7", "MIDI_NOTE_Gb7" } },
-	{ 115, { "MIDI_NOTE_G7" } },
-	{ 116, { "MIDI_NOTE_Gs7", "MIDI_NOTE_Ab7" } },
-	{ 117, { "MIDI_NOTE_A7" } },
-	{ 118, { "MIDI_NOTE_As7", "MIDI_NOTE_Bb7" } },
-	{ 119, { "MIDI_NOTE_B7" } },
-	{ 120, { "MIDI_NOTE_C8" } },
-	{ 121, { "MIDI_NOTE_Cs8", "MIDI_NOTE_Db8" } },
-	{ 122, { "MIDI_NOTE_D8" } },
-	{ 123, { "MIDI_NOTE_Ds8", "MIDI_NOTE_Eb8" } },
-	{ 124, { "MIDI_NOTE_E8" } },
-	{ 125, { "MIDI_NOTE_F8" } },
-	{ 126, { "MIDI_NOTE_Fs8", "MIDI_NOTE_Gb8" } },
-	{ 127, { "MIDI_NOTE_G8" } },
+	{ 0x78, "MIDI_MESSAGE_ALL_SOUND_OFF" },
+	{ 0x79, "MIDI_MESSAGE_RESET_ALL_CONTROLLERS" },
+	{ 0x7A, "MIDI_MESSAGE_LOCAL_CONTROL" },
+	{ 0x7B, "MIDI_MESSAGE_ALL_NOTES_OFF" },
+	{ 0x7C, "MIDI_MESSAGE_OMNI_OFF" },
+	{ 0x7D, "MIDI_MESSAGE_OMNI_ON" },
+	{ 0x7E, "MIDI_MESSAGE_MONO_ON" },
+	{ 0x7F, "MIDI_MESSAGE_POLY_ON" },
+	{ 0x80, "MIDI_MESSAGE_NOTE_OFF" },
+	{ 0x90, "MIDI_MESSAGE_NOTE_ON" },
+	{ 0xA0, "MIDI_MESSAGE_KEY_PRESSURE" },
+	{ 0xB0, "MIDI_MESSAGE_CONTROL_CHANGE" },
+	{ 0xC0, "MIDI_MESSAGE_PROGRAM_CHANGE" },
+	{ 0xD0, "MIDI_MESSAGE_CHANNEL_PRESSURE" },
+	{ 0xE0, "MIDI_MESSAGE_PITCH_BEND" },
+	{ 0xF0, "MIDI_MESSAGE_SYSTEM_EXCLUSIVE" },
+	{ 0xF1, "MIDI_MESSAGE_TIME_CODE" },
+	{ 0xF2, "MIDI_MESSAGE_SONG_POSITION" },
+	{ 0xF3, "MIDI_MESSAGE_SONG_SELECT" },
+	{ 0xF6, "MIDI_MESSAGE_TUNE_REQUEST" },
+	{ 0xF7, "MIDI_MESSAGE_END_OF_EXCLUSIVE" },
+	{ 0xF8, "MIDI_MESSAGE_TIMING_CLOCK" },
+	{ 0xFA, "MIDI_MESSAGE_START" },
+	{ 0xFB, "MIDI_MESSAGE_CONTINUE" },
+	{ 0xFC, "MIDI_MESSAGE_STOP" },
+	{ 0xFE, "MIDI_MESSAGE_ACTIVE_SENSING" },
+	{ 0xFF, "MIDI_MESSAGE_SYSTEM_RESET" },
 };
 
-const map<const unsigned char, const vector<const char*>> messageNames
+const map<unsigned char, const char*> message_type_name
 {
-	{  120, { "MIDI_MESSAGE_ALL_SOUND_OFF" } },
-	{  121, { "MIDI_MESSAGE_RESET_ALL_CONTROLLERS" } },
-	{  122, { "MIDI_MESSAGE_LOCAL_CONTROL" } },
-	{  123, { "MIDI_MESSAGE_ALL_NOTES_OFF" } },
-	{  124, { "MIDI_MESSAGE_OMNI_OFF" } },
-	{  125, { "MIDI_MESSAGE_OMNI_ON" } },
-	{  126, { "MIDI_MESSAGE_MONO_ON", "MIDI_MESSAGE_POLY_OFF" } },
-	{  127, { "MIDI_MESSAGE_POLY_ON", "MIDI_MESSAGE_MONO_OFF" } },
-	{ 0x80, { "MIDI_MESSAGE_NOTE_OFF" } },
-	{ 0x90, { "MIDI_MESSAGE_NOTE_ON" } },
-	{ 0xA0, { "MIDI_MESSAGE_KEY_PRESSURE" } },
-	{ 0xB0, { "MIDI_MESSAGE_CONTROL_CHANGE" } },
-	{ 0xC0, { "MIDI_MESSAGE_PROGRAM_CHANGE" } },
-	{ 0xD0, { "MIDI_MESSAGE_CHANNEL_PRESSURE" } },
-	{ 0xE0, { "MIDI_MESSAGE_PITCH_BEND" } },
-	{ 0xF0, { "MIDI_MESSAGE_SYSTEM_EXCLUSIVE" } },
-	{ 0xF1, { "MIDI_MESSAGE_TIME_CODE_QUARTER_FRAME" } },
-	{ 0xF2, { "MIDI_MESSAGE_SONG_POSITION" } },
-	{ 0xF3, { "MIDI_MESSAGE_SONG_SELECT" } },
-	{ 0xF6, { "MIDI_MESSAGE_TUNE_REQUEST" } },
-	{ 0xF7, { "MIDI_MESSAGE_END_OF_EXCLUSIVE" } },
-	{ 0xF8, { "MIDI_MESSAGE_TIMING_CLOCK" } },
-	{ 0XFA, { "MIDI_MESSAGE_START" } },
-	{ 0XFB, { "MIDI_MESSAGE_CONTINUE" } },
-	{ 0XFC, { "MIDI_MESSAGE_STOP" } },
-	{ 0XFE, { "MIDI_MESSAGE_ACTIVE_SENSING" } },
-	{ 0XFF, { "MIDI_MESSAGE_SYSTEM_RESET" } },
+	{ 0, "MIDI_MESSAGE_TYPE_CHANNEL_MODE" },
+	{ 1, "MIDI_MESSAGE_TYPE_CHANNEL_VOICE" },
+	{ 2, "MIDI_MESSAGE_TYPE_SYSTEM_EXCLUSIVE" },
+	{ 3, "MIDI_MESSAGE_TYPE_SYSTEM_COMMON" },
+	{ 4, "MIDI_MESSAGE_TYPE_SYSTEM_REAL_TIME" },
 };
 
-const map<const unsigned char, const vector<const char*>> messageTypeNames
+const map<unsigned char, const char*> control_name
 {
-	{ 0, { "MIDI_MESSAGE_TYPE_CHANNEL_MODE" } },
-	{ 1, { "MIDI_MESSAGE_TYPE_CHANNEL_VOICE" } },
-	{ 2, { "MIDI_MESSAGE_TYPE_SYSTEM_EXCLUSIVE" } },
-	{ 3, { "MIDI_MESSAGE_TYPE_SYSTEM_COMMON" } },
-	{ 4, { "MIDI_MESSAGE_TYPE_SYSTEM_REALTIME" } },
+	{ 0x00, "MIDI_CONTROL_BANK_SELECT" },
+	{ 0x01, "MIDI_CONTROL_MODULATION_WHEEL" },
+	{ 0x02, "MIDI_CONTROL_BREATH_CONTROLLER" },
+	{ 0x04, "MIDI_CONTROL_FOOT_CONTROLLER" },
+	{ 0x05, "MIDI_CONTROL_PORTAMENTO_TIME" },
+	{ 0x06, "MIDI_CONTROL_DATA_ENTRY" },
+	{ 0x07, "MIDI_CONTROL_CHANNEL_VOLUME" },
+	{ 0x08, "MIDI_CONTROL_BALANCE" },
+	{ 0x0A, "MIDI_CONTROL_PAN" },
+	{ 0x0B, "MIDI_CONTROL_EXPRESSION_CONTROLLER" },
+	{ 0x0C, "MIDI_CONTROL_EFFECT_CONTROL_1" },
+	{ 0x0D, "MIDI_CONTROL_EFFECT_CONTROL_2" },
+	{ 0x10, "MIDI_CONTROL_GENERAL_PURPOSE_1" },
+	{ 0x11, "MIDI_CONTROL_GENERAL_PURPOSE_2" },
+	{ 0x12, "MIDI_CONTROL_GENERAL_PURPOSE_3" },
+	{ 0x13, "MIDI_CONTROL_GENERAL_PURPOSE_4" },
+	{ 0x40, "MIDI_CONTROL_DAMPER_PEDAL" },
+	{ 0x41, "MIDI_CONTROL_PORTAMENTO_TOGGLE" },
+	{ 0x42, "MIDI_CONTROL_SOSTENUTO" },
+	{ 0x43, "MIDI_CONTROL_SOFT_PEDAL" },
+	{ 0x44, "MIDI_CONTROL_LEGATO_FOOTSWITCH" },
+	{ 0x45, "MIDI_CONTROL_HOLD_2" },
+	{ 0x46, "MIDI_CONTROL_SOUND_CONTROLLER_1" },
+	{ 0x47, "MIDI_CONTROL_SOUND_CONTROLLER_2" },
+	{ 0x48, "MIDI_CONTROL_SOUND_CONTROLLER_3" },
+	{ 0x49, "MIDI_CONTROL_SOUND_CONTROLLER_4" },
+	{ 0x4A, "MIDI_CONTROL_SOUND_CONTROLLER_5" },
+	{ 0x4B, "MIDI_CONTROL_SOUND_CONTROLLER_6" },
+	{ 0x4C, "MIDI_CONTROL_SOUND_CONTROLLER_7" },
+	{ 0x4D, "MIDI_CONTROL_SOUND_CONTROLLER_8" },
+	{ 0x4E, "MIDI_CONTROL_SOUND_CONTROLLER_9" },
+	{ 0x4F, "MIDI_CONTROL_SOUND_CONTROLLER_10" },
+	{ 0x50, "MIDI_CONTROL_GENERAL_PURPOSE_5" },
+	{ 0x51, "MIDI_CONTROL_GENERAL_PURPOSE_6" },
+	{ 0x52, "MIDI_CONTROL_GENERAL_PURPOSE_7" },
+	{ 0x53, "MIDI_CONTROL_GENERAL_PURPOSE_8" },
+	{ 0x54, "MIDI_CONTROL_PORTAMENTO_AMOUNT" },
+	{ 0x5B, "MIDI_CONTROL_EFFECTS_1_DEPTH" },
+	{ 0x5C, "MIDI_CONTROL_EFFECTS_2_DEPTH" },
+	{ 0x5D, "MIDI_CONTROL_EFFECTS_3_DEPTH" },
+	{ 0x5E, "MIDI_CONTROL_EFFECTS_4_DEPTH" },
+	{ 0x5F, "MIDI_CONTROL_EFFECTS_5_DEPTH" },
+	{ 0x60, "MIDI_CONTROL_DATA_INCREMENT" },
+	{ 0x61, "MIDI_CONTROL_DATA_DECREMENT" },
+	{ 0x63, "MIDI_CONTROL_NON_REGISTERED_PARAMETER_NUMBER" },
+	{ 0x65, "MIDI_CONTROL_REGISTERED_PARAMETER_NUMBER" },
 };
 
-const map<const unsigned char, const vector<const char*>> controlNames
+const map<unsigned char, const char*> control_bit_significance_name
 {
-	{   0, { "MIDI_CONTROL_BANK_SELECT" } },
-	{   1, { "MIDI_CONTROL_MODULATION_WHEEL" } },
-	{   2, { "MIDI_CONTROL_BREATH_CONTROLLER" } },
-	{   4, { "MIDI_CONTROL_FOOT_CONTROLLER" } },
-	{   5, { "MIDI_CONTROL_PORTAMENTO_TIME" } },
-	{   6, { "MIDI_CONTROL_DATA_ENTRY" } },
-	{   7, { "MIDI_CONTROL_CHANNEL_VOLUME" } },
-	{   8, { "MIDI_CONTROL_BALANCE" } },
-	{  10, { "MIDI_CONTROL_PAN" } },
-	{  11, { "MIDI_CONTROL_EXPRESSION_CONTROLLER" } },
-	{  12, { "MIDI_CONTROL_EFFECT_CONTROL_1" } },
-	{  13, { "MIDI_CONTROL_EFFECT_CONTROL_2" } },
-	{  16, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_1" } },
-	{  17, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_2" } },
-	{  18, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_3" } },
-	{  19, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_4" } },
-	{  64, { "MIDI_CONTROL_DAMPER_PEDAL" } },
-	{  65, { "MIDI_CONTROL_PORTAMENTO_TOGGLE" } },
-	{  66, { "MIDI_CONTROL_SOSTENUTO" } },
-	{  67, { "MIDI_CONTROL_SOFT_PEDAL" } },
-	{  68, { "MIDI_CONTROL_LEGATO_FOOTSWITCH" } },
-	{  69, { "MIDI_CONTROL_HOLD_2" } },
-	{  70, { "MIDI_CONTROL_SOUND_CONTROLLER_1", "MIDI_CONTROL_SOUND_VARIATION" } },
-	{  71, { "MIDI_CONTROL_SOUND_CONTROLLER_2", "MIDI_CONTROL_TIMBRE_INTENSITY" } },
-	{  72, { "MIDI_CONTROL_SOUND_CONTROLLER_3", "MIDI_CONTROL_RELEASE_TIME" } },
-	{  73, { "MIDI_CONTROL_SOUND_CONTROLLER_4", "MIDI_CONTROL_ATTACK_TIME" } },
-	{  74, { "MIDI_CONTROL_SOUND_CONTROLLER_5", "MIDI_CONTROL_BRIGHTNESS" } },
-	{  75, { "MIDI_CONTROL_SOUND_CONTROLLER_6" } },
-	{  76, { "MIDI_CONTROL_SOUND_CONTROLLER_7" } },
-	{  77, { "MIDI_CONTROL_SOUND_CONTROLLER_8" } },
-	{  78, { "MIDI_CONTROL_SOUND_CONTROLLER_9" } },
-	{  79, { "MIDI_CONTROL_SOUND_CONTROLLER_10" } },
-	{  80, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_5" } },
-	{  81, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_6" } },
-	{  82, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_7" } },
-	{  83, { "MIDI_CONTROL_GENERAL_PURPOSE_CONTROLLER_8" } },
-	{  84, { "MIDI_CONTROL_PORTAMENTO_CONTROL" } },
-	{  91, { "MIDI_CONTROL_EFFECTS_1_DEPTH" "MIDI_CONTROL_EXTERNAL_EFFECTS_DEPTH" } },
-	{  92, { "MIDI_CONTROL_EFFECTS_2_DEPTH" "MIDI_CONTROL_TREMOLO_DEPTH" } },
-	{  93, { "MIDI_CONTROL_EFFECTS_3_DEPTH" "MIDI_CONTROL_CHORUS_DEPTH" } },
-	{  94, { "MIDI_CONTROL_EFFECTS_4_DEPTH" "MIDI_CONTROL_CELESTE_DEPTH" } },
-	{  95, { "MIDI_CONTROL_EFFECTS_5_DEPTH" "MIDI_CONTROL_PHASER_DEPTH" } },
-	{  96, { "MIDI_CONTROL_DATA_INCREMENT" } },
-	{  97, { "MIDI_CONTROL_DATA_DECREMENT" } },
-	{  99, { "MIDI_CONTROL_NON_REGISTERED_PARAMETER_NUMBER" } },
-	{ 101, { "MIDI_CONTROL_REGISTERED_PARAMETER_NUMBER" } },
+	{ 0, "MIDI_CONTROL_BIT_SIGNIFICANCE_MOST" },
+	{ 1, "MIDI_CONTROL_BIT_SIGNIFICANCE_LEAST" },
 };
 
-const map<const unsigned char, const vector<const char*>> controlBitSignificanceNames
+int open_port(ILuaBase* LUA, RtMidi* midi, const char* should, const char* callback)
 {
-	{ 0, { "MIDI_CONTROL_BIT_SIGNIFICANCE_NONE" } },
-	{ 1, { "MIDI_CONTROL_BIT_SIGNIFICANCE_MOST" } },
-	{ 2, { "MIDI_CONTROL_BIT_SIGNIFICANCE_LEAST" } },
-};
+	const auto port = (unsigned int)LUA->CheckNumber(1);
 
-void inputCallback(double deltaTime, vector<unsigned char>* messagePointer, void* userData)
-{
-	if (!messagePointer->empty())
-	{
-		vector<unsigned char> message = *messagePointer;
-
-		if (message[0] >= 0x90 && message[0] < 0xA0 && message[2] < 1)
-		{
-			message[0] = message[0] - 16;
-		}
-
-		inputMessages.push(message);
-	}
-}
-
-LUA_FUNCTION(inputThink)
-{
-	if (!inputMessages.empty())
-	{
-		LUA->PushSpecial(SPECIAL_GLOB);
-			LUA->GetField(-1, "hook");
-				while (!inputMessages.empty())
+	LUA->PushSpecial(SPECIAL_GLOB);
+		LUA->GetField(-1, "hook");
+			LUA->GetField(-1, "Run");
+				LUA->PushString(should);
+				LUA->PushNumber((double)port);
+			LUA->Call(2, 1);
+				if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
 				{
-					const auto message = inputMessages.front();
+					try
+					{
+						midi->openPort(port);
+					}
+					catch (const RtMidiError& error)
+					{
+						LUA->ThrowError(error.what());
+					}
 
-					inputMessages.pop();
-
-					const auto& size = (int)message.size();
-
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldReceiveMidiInputMessage");
-
-						for (const auto& byte : message)
-						{
-							LUA->PushNumber((double)byte);
-						}
-					LUA->Call(size + 1, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							LUA->GetField(-2, "Run");
-								LUA->PushString("OnMidiInputMessageReceived");
-
-								for (const auto& byte : message)
-								{
-									LUA->PushNumber((double)byte);
-								}
-							LUA->Call(size + 1, 0);
-						}
-					LUA->Pop();
+					LUA->GetField(-2, "Run");
+						LUA->PushString(callback);
+						LUA->PushNumber((double)port);
+					LUA->Call(2, 0);
 				}
 			LUA->Pop();
 		LUA->Pop();
-	}
+	LUA->Pop();
 
 	return 0;
 }
 
-LUA_FUNCTION(openInputPort)
+int close_port(ILuaBase* LUA, RtMidi* midi, const char* should, const char* callback)
 {
-	const auto& port = (unsigned int)LUA->CheckNumber(1);
-
 	LUA->PushSpecial(SPECIAL_GLOB);
 		LUA->GetField(-1, "hook");
-			try
-			{
-				if (inputApi->isPortOpen())
+			LUA->GetField(-1, "Run");
+				LUA->PushString(should);
+			LUA->Call(1, 1);
+				if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
 				{
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldCloseMidiInputPort");
-					LUA->Call(1, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							inputApi->closePort();
+					try
+					{
+						midi->closePort();
+					}
+					catch (const RtMidiError& error)
+					{
+						LUA->ThrowError(error.what());
+					}
 
-							if (!inputApi->isPortOpen())
-							{
-								LUA->GetField(-2, "Run");
-									LUA->PushString("OnMidiInputPortClosed");
-								LUA->Call(1, 0);
-							}
-						}
-					LUA->Pop();
+					LUA->GetField(-2, "Run");
+						LUA->PushString(callback);
+					LUA->Call(1, 0);
 				}
-
-				if (!inputApi->isPortOpen())
-				{
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldOpenMidiInputPort");
-						LUA->PushNumber((double)port);
-					LUA->Call(2, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							inputApi->openPort(port);
-
-							if (inputApi->isPortOpen())
-							{
-								LUA->GetField(-2, "Run");
-									LUA->PushString("OnMidiInputPortOpened");
-									LUA->PushNumber((double)port);
-								LUA->Call(2, 0);
-
-								LUA->PushBool(true);
-
-								return 1;
-							}
-						}
-					LUA->Pop();
-				}
-			}
-			catch (const RtMidiError& error)
-			{
-				LUA->ThrowError(error.getMessage().c_str());
-			}
+			LUA->Pop();
 		LUA->Pop();
 	LUA->Pop();
 
-	LUA->PushBool(false);
-
-	return 1;
+	return 0;
 }
 
-LUA_FUNCTION(closeInputPort)
+int is_port_open(ILuaBase* LUA, RtMidi* midi)
 {
 	try
 	{
-		if (inputApi->isPortOpen())
-		{
-			LUA->PushSpecial(SPECIAL_GLOB);
-				LUA->GetField(-1, "hook");
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldCloseMidiInputPort");
-					LUA->Call(1, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							inputApi->closePort();
-
-							if (!inputApi->isPortOpen())
-							{
-								LUA->GetField(-2, "Run");
-									LUA->PushString("OnMidiInputPortClosed");
-								LUA->Call(1, 0);
-
-								LUA->PushBool(true);
-
-								return 1;
-							}
-						}
-					LUA->Pop();
-				LUA->Pop();
-			LUA->Pop();
-		}
+		LUA->PushBool(midi->isPortOpen());
 	}
 	catch (const RtMidiError& error)
 	{
-		LUA->ThrowError(error.getMessage().c_str());
+		LUA->ThrowError(error.what());
 	}
-
-	LUA->PushBool(false);
 
 	return 1;
 }
 
-LUA_FUNCTION(isInputPortOpen)
+int get_port_name(ILuaBase* LUA, RtMidi* midi)
 {
 	try
 	{
-		LUA->PushBool(inputApi->isPortOpen());
+		LUA->PushString(midi->getPortName((unsigned int)LUA->CheckNumber(1)).c_str());
 	}
 	catch (const RtMidiError& error)
 	{
-		LUA->ThrowError(error.getMessage().c_str());
+		LUA->ThrowError(error.what());
 	}
 
 	return 1;
 }
 
-LUA_FUNCTION(getInputPortName)
+int get_port_count(ILuaBase* LUA, RtMidi* midi)
 {
 	try
 	{
-		LUA->PushString(inputApi->getPortName((unsigned int)LUA->CheckNumber(1)).c_str());
+		LUA->PushNumber((double)midi->getPortCount());
 	}
 	catch (const RtMidiError& error)
 	{
-		LUA->ThrowError(error.getMessage().c_str());
+		LUA->ThrowError(error.what());
 	}
 
 	return 1;
 }
 
-LUA_FUNCTION(getInputPortCount)
+LUA_FUNCTION(open_input_port)
 {
-	try
-	{
-		LUA->PushNumber((double)inputApi->getPortCount());
-	}
-	catch (const RtMidiError& error)
-	{
-		LUA->ThrowError(error.getMessage().c_str());
-	}
-
-	return 1;
+	return open_port(LUA, midi_in, "ShouldOpenMidiInputPort", "OnMidiInputPortOpened");
 }
 
-LUA_FUNCTION(openOutputPort)
+LUA_FUNCTION(close_input_port)
 {
-	const auto& port = (unsigned int)LUA->CheckNumber(1);
-
-	LUA->PushSpecial(SPECIAL_GLOB);
-		LUA->GetField(-1, "hook");
-			try
-			{
-				if (outputApi->isPortOpen())
-				{
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldCloseMidiOutputPort");
-					LUA->Call(1, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							outputApi->closePort();
-
-							if (!outputApi->isPortOpen())
-							{
-								LUA->GetField(-2, "Run");
-									LUA->PushString("OnMidiOutputPortClosed");
-								LUA->Call(1, 0);
-							}
-						}
-					LUA->Pop();
-				}
-
-				if (!outputApi->isPortOpen())
-				{
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldOpenMidiOutputPort");
-						LUA->PushNumber((double)port);
-					LUA->Call(2, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							outputApi->openPort(port);
-
-							if (outputApi->isPortOpen())
-							{
-								LUA->GetField(-2, "Run");
-									LUA->PushString("OnMidiOutputPortOpened");
-									LUA->PushNumber((double)port);
-								LUA->Call(2, 0);
-
-								LUA->PushBool(true);
-
-								return 1;
-							}
-						}
-					LUA->Pop();
-				}
-			}
-			catch (const RtMidiError& error)
-			{
-				LUA->ThrowError(error.getMessage().c_str());
-			}
-		LUA->Pop();
-	LUA->Pop();
-
-	LUA->PushBool(false);
-
-	return 1;
+	return close_port(LUA, midi_in, "ShouldCloseMidiInputPort", "OnMidiInputPortClosed");
 }
 
-LUA_FUNCTION(closeOutputPort)
+LUA_FUNCTION(is_input_port_open)
 {
-	try
-	{
-		if (outputApi->isPortOpen())
-		{
-			LUA->PushSpecial(SPECIAL_GLOB);
-				LUA->GetField(-1, "hook");
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldCloseMidiOutputPort");
-					LUA->Call(1, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							outputApi->closePort();
-
-							if (!outputApi->isPortOpen())
-							{
-								LUA->GetField(-2, "Run");
-									LUA->PushString("OnMidiOutputPortClosed");
-								LUA->Call(1, 0);
-
-								LUA->PushBool(true);
-
-								return 1;
-							}
-						}
-					LUA->Pop();
-				LUA->Pop();
-			LUA->Pop();
-		}
-	}
-	catch (const RtMidiError& error)
-	{
-		LUA->ThrowError(error.getMessage().c_str());
-	}
-
-	LUA->PushBool(false);
-
-	return 1;
+	return is_port_open(LUA, midi_in);
 }
 
-LUA_FUNCTION(isOutputPortOpen)
+LUA_FUNCTION(get_input_port_name)
 {
-	try
-	{
-		LUA->PushBool(outputApi->isPortOpen());
-	}
-	catch (const RtMidiError& error)
-	{
-		LUA->ThrowError(error.getMessage().c_str());
-	}
-
-	return 1;
+	return get_port_name(LUA, midi_in);
 }
 
-LUA_FUNCTION(getOutputPortName)
+LUA_FUNCTION(get_input_port_count)
 {
-	try
-	{
-		LUA->PushString(outputApi->getPortName((unsigned int)LUA->CheckNumber(1)).c_str());
-	}
-	catch (const RtMidiError& error)
-	{
-		LUA->ThrowError(error.getMessage().c_str());
-	}
-
-	return 1;
+	return get_port_count(LUA, midi_in);
 }
 
-LUA_FUNCTION(getOutputPortCount)
+LUA_FUNCTION(open_output_port)
 {
-	try
-	{
-		LUA->PushNumber((double)outputApi->getPortCount());
-	}
-	catch (const RtMidiError& error)
-	{
-		LUA->ThrowError(error.getMessage().c_str());
-	}
-
-	return 1;
+	return open_port(LUA, midi_out, "ShouldOpenMidiOutputPort", "OnMidiOutputPortOpened");
 }
 
-LUA_FUNCTION(sendOutputMessage)
+LUA_FUNCTION(close_output_port)
+{
+	return close_port(LUA, midi_out, "ShouldCloseMidiOutputPort", "OnMidiOutputPortClosed");
+}
+
+LUA_FUNCTION(is_output_port_open)
+{
+	return is_port_open(LUA, midi_out);
+}
+
+LUA_FUNCTION(get_output_port_name)
+{
+	return get_port_name(LUA, midi_out);
+}
+
+LUA_FUNCTION(get_output_port_count)
+{
+	return get_port_count(LUA, midi_out);
+}
+
+LUA_FUNCTION(send_message)
 {
 	vector<unsigned char> message = { (unsigned char)LUA->CheckNumber(1) };
 
@@ -603,119 +299,126 @@ LUA_FUNCTION(sendOutputMessage)
 		message.push_back((unsigned char)LUA->CheckNumber(i));
 	}
 
-	const auto& size = (int)message.size();
+	const auto size = (int)message.size();
 
-	try
+	LUA->PushSpecial(SPECIAL_GLOB);
+		LUA->GetField(-1, "hook");
+			LUA->GetField(-1, "Run");
+				LUA->PushString("ShouldSendMidiMessage");
+
+				for (const double byte : message)
+				{
+					LUA->PushNumber(byte);
+				}
+			LUA->Call(size + 1, 1);
+				if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
+				{
+					try
+					{
+						midi_out->sendMessage(&message);
+					}
+					catch (const RtMidiError& error)
+					{
+						LUA->ThrowError(error.what());
+					}
+
+					LUA->GetField(-2, "Run");
+						LUA->PushString("OnMidiMessageSent");
+
+						for (const double byte : message)
+						{
+							LUA->PushNumber(byte);
+						}
+					LUA->Call(size + 1, 0);
+				}
+			LUA->Pop();
+		LUA->Pop();
+	LUA->Pop();
+
+	return 0;
+}
+
+LUA_FUNCTION(receive_message)
+{
+	vector<unsigned char> message;
+
+	for (midi_in->getMessage(&message); !message.empty(); midi_in->getMessage(&message))
 	{
-		if (outputApi->isPortOpen())
-		{
-			LUA->PushSpecial(SPECIAL_GLOB);
-				LUA->GetField(-1, "hook");
-					LUA->GetField(-1, "Run");
-						LUA->PushString("ShouldSendMidiOutputMessage");
+		const auto size = (int)message.size();
 
-						for (const auto& byte : message)
-						{
-							LUA->PushNumber((double)byte);
-						}
-					LUA->Call(size + 1, 1);
-						if (LUA->IsType(-1, Type::Nil) || LUA->GetBool())
-						{
-							outputApi->sendMessage(&message);
+		LUA->PushSpecial(SPECIAL_GLOB);
+			LUA->GetField(-1, "hook");
+				LUA->GetField(-1, "Run");
+					LUA->PushString("ShouldReceiveMidiMessage");
 
-							LUA->GetField(-2, "Run");
-								LUA->PushString("OnMidiOutputMessageSent");
+					for (const double byte : message)
+					{
+						LUA->PushNumber(byte);
+					}
+				LUA->Call(size + 1, 1);
+					if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
+					{
+						LUA->GetField(-2, "Run");
+							LUA->PushString("OnMidiMessageReceived");
 
-								for (const auto& byte : message)
-								{
-									LUA->PushNumber((double)byte);
-								}
-							LUA->Call(size + 1, 0);
-
-							LUA->PushBool(true);
-
-							return 1;
-						}
-					LUA->Pop();
+							for (const double byte : message)
+							{
+								LUA->PushNumber(byte);
+							}
+						LUA->Call(size + 1, 0);
+					}
 				LUA->Pop();
 			LUA->Pop();
-		}
-	}
-	catch (const RtMidiError& error)
-	{
-		LUA->ThrowError(error.getMessage().c_str());
+		LUA->Pop();
 	}
 
-	LUA->PushBool(false);
-
-	return 1;
+	return 0;
 }
 
-LUA_FUNCTION(getNoteName)
+LUA_FUNCTION(get_message_name)
 {
-	const auto& note = (unsigned char)LUA->CheckNumber(1);
+	const auto message = (unsigned char)LUA->CheckNumber(1);
 
-	if (noteNames.count(note))
+	if (message_name.count(message))
 	{
-		const auto& names = noteNames.at(note);
-
-		for (const auto& name : names)
-		{
-			LUA->PushString(name);
-		}
-
-		return (int)names.size();
-	}
-	else
-	{
-		LUA->PushString("MIDI_NOTE_INVALID");
-
-		return 1;
-	}
-}
-
-LUA_FUNCTION(getMessageName)
-{
-	const auto& message = (unsigned char)LUA->CheckNumber(1);
-
-	if (messageNames.count(message))
-	{
-		const auto& names = messageNames.at(message);
-
-		for (const auto& name : names)
-		{
-			LUA->PushString(name);
-		}
-
-		return (int)names.size();
+		LUA->PushString(message_name.at(message));
 	}
 	else
 	{
 		if (message >= 0x80 && message < 0xF0)
 		{
-			const auto& names = messageNames.at(0x80 + (unsigned char)floor(((double)message - 0x80) / 16) * 16);
-
-			for (const auto& name : names)
-			{
-				LUA->PushString(name);
-			}
-
-			return (int)names.size();
+			LUA->PushString(message_name.at(0x80 + (unsigned char)floor(((double)message - 0x80) / 16) * 16));
 		}
 		else
 		{
 			LUA->PushString("MIDI_MESSAGE_INVALID");
-
-			return 1;
 		}
 	}
+
+	return 1;
 }
 
-LUA_FUNCTION(getMessageType)
+LUA_FUNCTION(get_message_channel)
 {
-	const auto& message = (unsigned char)LUA->CheckNumber(1);
+	const auto message = (unsigned char)LUA->CheckNumber(1);
 
-	if (messageNames.count(message))
+	if (message >= 0x80 && message < 0xF0)
+	{
+		LUA->PushNumber((message % 16) + 1);
+	}
+	else
+	{
+		LUA->PushNumber(-1);
+	}
+
+	return 1;
+}
+
+LUA_FUNCTION(get_message_type)
+{
+	const auto message = (unsigned char)LUA->CheckNumber(1);
+
+	if (message_name.count(message))
 	{
 		if (message < 0x80)
 		{
@@ -753,141 +456,69 @@ LUA_FUNCTION(getMessageType)
 	return 1;
 }
 
-LUA_FUNCTION(getMessageChannel)
+LUA_FUNCTION(get_message_type_name)
 {
-	const auto& message = (unsigned char)LUA->CheckNumber(1);
+	const auto message_type = (unsigned char)LUA->CheckNumber(1);
 
-	if (message >= 0x80 && message < 0xF0)
+	if (message_type_name.count(message_type))
 	{
-		LUA->PushNumber((message % 16) + 1);
+		LUA->PushString(message_type_name.at(message_type));
 	}
 	else
 	{
-		LUA->PushNumber(-1);
+		LUA->PushString("MIDI_MESSAGE_TYPE_INVALID");
 	}
 
 	return 1;
 }
 
-LUA_FUNCTION(getMessageTypeName)
+LUA_FUNCTION(get_control_name)
 {
-	const auto& type = (unsigned char)LUA->CheckNumber(1);
+	const auto control = (unsigned char)LUA->CheckNumber(1);
 
-	if (messageTypeNames.count(type))
+	if (control_name.count(control))
 	{
-		const auto& names = messageTypeNames.at(type);
-
-		for (const auto& name : names)
-		{
-			LUA->PushString(name);
-		}
-
-		return (int)names.size();
+		LUA->PushString(control_name.at(control));
 	}
 	else
 	{
-		LUA->PushString("MIDI_MESSAGE_TYPE_INVALID");
-
-		return 1;
-	}
-}
-
-LUA_FUNCTION(getControlName)
-{
-	const auto& control = (unsigned char)LUA->CheckNumber(1);
-
-	if (controlNames.count(control))
-	{
-		const auto& names = controlNames.at(control);
-
-		for (const auto& name : names)
+		if (control >= 0x20 && control < 0x40 && control_name.count(control - 0x20))
 		{
-			LUA->PushString(name);
-		}
-
-		return (int)names.size();
-	}
-	else
-	{
-		if (control == 98 || control == 100)
-		{
-			const auto& names = controlNames.at(control + 1);
-
-			for (const auto& name : names)
-			{
-				LUA->PushString(name);
-			}
-
-			return (int)names.size();
-		}
-		else if (control >= 32 && control < 64)
-		{
-			if (controlNames.count(control - 32))
-			{
-				const auto& names = controlNames.at(control - 32);
-
-				for (const auto& name : names)
-				{
-					LUA->PushString(name);
-				}
-
-				return (int)names.size();
-			}
-			else
-			{
-				LUA->PushString("MIDI_CONTROL_INVALID");
-
-				return 1;
-			}
+			LUA->PushString(control_name.at(control - 0x20));
 		}
 		else
 		{
 			LUA->PushString("MIDI_CONTROL_INVALID");
-
-			return 1;
 		}
 	}
+
+	return 1;
 }
 
-LUA_FUNCTION(getControlBitSignificance)
+LUA_FUNCTION(get_control_bit_significance)
 {
-	const auto& control = (unsigned char)LUA->CheckNumber(1);
+	const auto control = (unsigned char)LUA->CheckNumber(1);
 
-	if (controlNames.count(control))
+	if (control_name.count(control))
 	{
-		if (control >= 0 && control < 32)
+		if (control == 0x63 || control == 0x65 || (control >= 0x00 && control < 0x20))
 		{
-			LUA->PushNumber(1);
+			LUA->PushNumber(0);
 		}
-		else if (control >= 70 && control < 85)
-		{
-			LUA->PushNumber(2);
-		}
-		else if (control == 99 || control == 100)
+		else if (control >= 0x46 && control < 0x55)
 		{
 			LUA->PushNumber(1);
 		}
 		else
 		{
-			LUA->PushNumber(0);
+			LUA->PushNumber(-1);
 		}
 	}
 	else
 	{
-		if (control >= 32 && control < 64)
+		if (control == 0x62 || control == 0x64 || (control >= 0x20 && control < 0x40 && control_name.count(control - 0x20)))
 		{
-			if (controlNames.count(control - 32))
-			{
-				LUA->PushNumber(2);
-			}
-			else
-			{
-				LUA->PushNumber(-1);
-			}
-		}
-		else if (control == 98 || control == 100)
-		{
-			LUA->PushNumber(2);
+			LUA->PushNumber(1);
 		}
 		else
 		{
@@ -898,156 +529,136 @@ LUA_FUNCTION(getControlBitSignificance)
 	return 1;
 }
 
-LUA_FUNCTION(getControlBitSignificanceName)
+LUA_FUNCTION(get_control_bit_significance_name)
 {
-	const auto& bitSignificance = (unsigned char)LUA->CheckNumber(1);
+	const auto control_bit_significance = (unsigned char)LUA->CheckNumber(1);
 
-	if (controlBitSignificanceNames.count(bitSignificance))
+	if (control_bit_significance_name.count(control_bit_significance))
 	{
-		const auto& names = controlBitSignificanceNames.at(bitSignificance);
-
-		for (const auto& name : names)
-		{
-			LUA->PushString(name);
-		}
-
-		return (int)names.size();
+		LUA->PushString(control_bit_significance_name.at(control_bit_significance));
 	}
 	else
 	{
 		LUA->PushString("MIDI_CONTROL_BIT_SIGNIFICANCE_INVALID");
-
-		return 1;
 	}
+
+	return 1;
 }
 
 GMOD_MODULE_OPEN()
 {
 	try
 	{
-		inputApi  = new RtMidiIn();
-		outputApi = new RtMidiOut();
-		
-		inputApi->setCallback(&inputCallback);
+		midi_in  = new RtMidiIn();
+		midi_out = new RtMidiOut();
 	}
 	catch (const RtMidiError& error)
 	{
-		LUA->ThrowError(error.getMessage().c_str());
+		LUA->ThrowError(error.what());
 	}
 
 	LUA->PushSpecial(SPECIAL_GLOB);
-		for (const auto& pair : noteNames)
+		for (const auto& pair : message_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNumber(pair.first);
-				LUA->SetField(-2, name);
-			}
-
+			LUA->PushNumber((double)pair.first);
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : messageNames)
+		for (const auto& pair : message_type_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNumber(pair.first);
-				LUA->SetField(-2, name);
-			}
-
+			LUA->PushNumber((double)pair.first);
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : messageTypeNames)
+		for (const auto& pair : control_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNumber(pair.first);
-				LUA->SetField(-2, name);
-			}
+			LUA->PushNumber((double)pair.first);
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : controlNames)
+		for (const auto& pair : control_bit_significance_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNumber(pair.first);
-				LUA->SetField(-2, name);
-			}
+			LUA->PushNumber((double)pair.first);
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : controlBitSignificanceNames)
-		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNumber(pair.first);
-				LUA->SetField(-2, name);
-			}
-		}
-
-		LUA->PushNumber(-1);
-		LUA->SetField(-2, "MIDI_NOTE_INVALID");
 		LUA->PushNumber(-1);
 		LUA->SetField(-2, "MIDI_MESSAGE_INVALID");
-		LUA->PushNumber(-1);
-		LUA->SetField(-2, "MIDI_CONTROL_INVALID");
+		LUA->PushNumber((double)message_name.begin()->first);
+		LUA->SetField(-2, "MIDI_MESSAGE_FIRST");
+		LUA->PushNumber((double)message_name.rbegin()->first);
+		LUA->SetField(-2, "MIDI_MESSAGE_LAST");
+		LUA->PushNumber((double)message_name.size());
+		LUA->SetField(-2, "MIDI_MESSAGE_COUNT");
 		LUA->PushNumber(-1);
 		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_INVALID");
+		LUA->PushNumber((double)message_type_name.begin()->first);
+		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_FIRST");
+		LUA->PushNumber((double)message_type_name.rbegin()->first);
+		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_LAST");
+		LUA->PushNumber((double)message_type_name.size());
+		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_COUNT");
+		LUA->PushNumber(-1);
+		LUA->SetField(-2, "MIDI_CONTROL_INVALID");
+		LUA->PushNumber((double)control_name.begin()->first);
+		LUA->SetField(-2, "MIDI_CONTROL_FIRST");
+		LUA->PushNumber((double)control_name.rbegin()->first);
+		LUA->SetField(-2, "MIDI_CONTROL_LAST");
+		LUA->PushNumber((double)control_name.size());
+		LUA->SetField(-2, "MIDI_CONTROL_COUNT");
 		LUA->PushNumber(-1);
 		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_INVALID");
-
-		LUA->PushNumber(0);
-		LUA->SetField(-2, "MIDI_NOTE_FIRST");
-		LUA->PushNumber(127);
-		LUA->SetField(-2, "MIDI_NOTE_LAST");
-		LUA->PushNumber(128);
-		LUA->SetField(-2, "MIDI_NOTE_COUNT");
+		LUA->PushNumber((double)control_bit_significance_name.begin()->first);
+		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_FIRST");
+		LUA->PushNumber((double)control_bit_significance_name.rbegin()->first);
+		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_LAST");
+		LUA->PushNumber((double)control_bit_significance_name.size());
+		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_COUNT");
 
 		LUA->GetField(-1, "hook");
 			LUA->GetField(-1, "Add");
 				LUA->PushString("Think");
-				LUA->PushString("MidiInputThink");
-				LUA->PushCFunction(&inputThink);
+				LUA->PushString("ReceiveMidiMessage");
+				LUA->PushCFunction(receive_message);
 			LUA->Call(3, 0);
 		LUA->Pop();
 
 		LUA->CreateTable();
-			LUA->PushCFunction(&openInputPort);
+			LUA->PushCFunction(open_input_port);
 			LUA->SetField(-2, "OpenInputPort");
-			LUA->PushCFunction(&closeInputPort);
+			LUA->PushCFunction(close_input_port);
 			LUA->SetField(-2, "CloseInputPort");
-			LUA->PushCFunction(&isInputPortOpen);
+			LUA->PushCFunction(is_input_port_open);
 			LUA->SetField(-2, "IsInputPortOpen");
-			LUA->PushCFunction(&getInputPortName);
+			LUA->PushCFunction(get_input_port_name);
 			LUA->SetField(-2, "GetInputPortName");
-			LUA->PushCFunction(&getInputPortCount);
+			LUA->PushCFunction(get_input_port_count);
 			LUA->SetField(-2, "GetInputPortCount");
-			LUA->PushCFunction(&openOutputPort);
+			LUA->PushCFunction(open_output_port);
 			LUA->SetField(-2, "OpenOutputPort");
-			LUA->PushCFunction(&closeOutputPort);
+			LUA->PushCFunction(close_output_port);
 			LUA->SetField(-2, "CloseOutputPort");
-			LUA->PushCFunction(&isOutputPortOpen);
+			LUA->PushCFunction(is_output_port_open);
 			LUA->SetField(-2, "IsOutputPortOpen");
-			LUA->PushCFunction(&getOutputPortName);
+			LUA->PushCFunction(get_output_port_name);
 			LUA->SetField(-2, "GetOutputPortName");
-			LUA->PushCFunction(&getOutputPortCount);
+			LUA->PushCFunction(get_output_port_count);
 			LUA->SetField(-2, "GetOutputPortCount");
-			LUA->PushCFunction(&sendOutputMessage);
-			LUA->SetField(-2, "SendOutputMessage");
-
-			LUA->PushCFunction(&getNoteName);
-			LUA->SetField(-2, "GetNoteName");
-			LUA->PushCFunction(&getMessageName);
+			LUA->PushCFunction(send_message);
+			LUA->SetField(-2, "SendMessage");
+			LUA->PushCFunction(get_message_name);
 			LUA->SetField(-2, "GetMessageName");
-			LUA->PushCFunction(&getMessageType);
-			LUA->SetField(-2, "GetMessageType");
-			LUA->PushCFunction(&getMessageChannel);
+			LUA->PushCFunction(get_message_channel);
 			LUA->SetField(-2, "GetMessageChannel");
-			LUA->PushCFunction(&getMessageTypeName);
+			LUA->PushCFunction(get_message_type);
+			LUA->SetField(-2, "GetMessageType");
+			LUA->PushCFunction(get_message_type_name);
 			LUA->SetField(-2, "GetMessageTypeName");
-			LUA->PushCFunction(&getControlName);
+			LUA->PushCFunction(get_control_name);
 			LUA->SetField(-2, "GetControlName");
-			LUA->PushCFunction(&getControlBitSignificance);
+			LUA->PushCFunction(get_control_bit_significance);
 			LUA->SetField(-2, "GetControlBitSignificance");
-			LUA->PushCFunction(&getControlBitSignificanceName);
+			LUA->PushCFunction(get_control_bit_significance_name);
 			LUA->SetField(-2, "GetControlBitSignificanceName");
 		LUA->SetField(-2, "midi");
 	LUA->Pop();
@@ -1057,77 +668,78 @@ GMOD_MODULE_OPEN()
 
 GMOD_MODULE_CLOSE()
 {
-	delete inputApi;
-	delete outputApi;
+	try
+	{
+		delete midi_in;
+		delete midi_out;
+	}
+	catch (const RtMidiError& error)
+	{
+		LUA->ThrowError(error.what());
+	}
 
 	LUA->PushSpecial(SPECIAL_GLOB);
-		for (const auto& pair : noteNames)
+		for (const auto& pair : message_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNil();
-				LUA->SetField(-2, name);
-			}
+			LUA->PushNil();
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : messageNames)
+		for (const auto& pair : message_type_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNil();
-				LUA->SetField(-2, name);
-			}
+			LUA->PushNil();
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : messageTypeNames)
+		for (const auto& pair : control_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNil();
-				LUA->SetField(-2, name);
-			}
+			LUA->PushNil();
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : controlNames)
+		for (const auto& pair : control_bit_significance_name)
 		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNil();
-				LUA->SetField(-2, name);
-			}
+			LUA->PushNil();
+			LUA->SetField(-2, pair.second);
 		}
 
-		for (const auto& pair : controlBitSignificanceNames)
-		{
-			for (const auto& name : pair.second)
-			{
-				LUA->PushNil();
-				LUA->SetField(-2, name);
-			}
-		}
-
-		LUA->PushNil();
-		LUA->SetField(-2, "MIDI_NOTE_INVALID");
 		LUA->PushNil();
 		LUA->SetField(-2, "MIDI_MESSAGE_INVALID");
 		LUA->PushNil();
-		LUA->SetField(-2, "MIDI_CONTROL_INVALID");
+		LUA->SetField(-2, "MIDI_MESSAGE_FIRST");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_MESSAGE_LAST");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_MESSAGE_COUNT");
 		LUA->PushNil();
 		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_INVALID");
 		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_FIRST");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_LAST");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_MESSAGE_TYPE_COUNT");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_CONTROL_INVALID");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_CONTROL_FIRST");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_CONTROL_LAST");
+		LUA->PushNil();
+		LUA->SetField(-2, "MIDI_CONTROL_COUNT");
+		LUA->PushNil();
 		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_INVALID");
-
 		LUA->PushNil();
-		LUA->SetField(-2, "MIDI_NOTE_FIRST");
+		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_FIRST");
 		LUA->PushNil();
-		LUA->SetField(-2, "MIDI_NOTE_LAST");
+		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_LAST");
 		LUA->PushNil();
-		LUA->SetField(-2, "MIDI_NOTE_COUNT");
+		LUA->SetField(-2, "MIDI_CONTROL_BIT_SIGNIFICANCE_COUNT");
 
 		LUA->GetField(-1, "hook");
 			LUA->GetField(-1, "Remove");
 				LUA->PushString("Think");
-				LUA->PushString("MidiInputThink");
+				LUA->PushString("ReceiveMidiMessage");
 			LUA->Call(2, 0);
 		LUA->Pop();
 
