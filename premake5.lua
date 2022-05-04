@@ -19,8 +19,8 @@ newoption {
 	description = "Choose an API for RtMidi",
 }
 
-workspace "gmod-midi"
-	startproject   "gmod-midi"
+workspace "gmod-rtmidi"
+	startproject   "gmod-rtmidi"
 	cppdialect     "C++11"
 	language       "C++"
 	pic            "On"
@@ -64,12 +64,12 @@ workspace "gmod-midi"
 			defines { "__MACOSX_CORE__" }
 			links   { "CoreMIDI.framework", "CoreAudio.framework", "CoreFoundation.framework" }
 
-	project "gmod-midi"
+	project "gmod-rtmidi"
 		kind            "SharedLib"
-		files           { "src/gmod-midi.cpp" }
+		files           { "src/gmod-rtmidi.cpp" }
 		links           { "RtMidi" }
 		targetprefix    "gmcl_"
-		targetname      "midi"
+		targetname      "rtmidi"
 		targetextension ".dll"
 
 		filter { "system:windows", "platforms:x86" }
