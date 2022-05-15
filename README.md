@@ -1,10 +1,6 @@
 # gmod-rtmidi
 
-[![C++](https://img.shields.io/badge/C%2B%2B-11-blue)](https://en.cppreference.com/)
-[![RtMidi](https://img.shields.io/badge/RtMidi-5.0.0-blue)](https://www.music.mcgill.ca/~gary/rtmidi/)
-[![gmod-module-base](https://img.shields.io/badge/gmod--module--base-b263361-blue)](https://github.com/Facepunch/gmod-module-base)
-
-This is a C++ module for [Garry's Mod](https://gmod.facepunch.com/) that provides realtime MIDI input / output to the in-game Lua API through the [RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/) library.
+This is a Lua module for [Garry's Mod](https://gmod.facepunch.com/) that provides real-time MIDI input / output through the [RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/) library.
 
 ## Download
 
