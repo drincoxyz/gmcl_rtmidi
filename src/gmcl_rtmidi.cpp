@@ -1,5 +1,5 @@
 /*
-	gmod-rtmidi: real-time MIDI input / output for Garry's Mod
+	gmcl_rtmidi: real-time MIDI input / output for Garry's Mod
 	Copyright (c) 2021-2022 Brandon Little
 
 	Redistribution and use in source and binary forms, with or without modification,

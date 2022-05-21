@@ -1,14 +1,14 @@
-# gmod-rtmidi
+# gmcl_rtmidi
 
 This is a Lua module for [Garry's Mod](https://gmod.facepunch.com/) that provides real-time MIDI input / output through the [RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/) library.
 
 ## Download
 
-Compiled binaries are available from [releases](https://github.com/drincoxyz/gmod-rtmidi/releases).
+Compiled binaries are available from [releases](https://github.com/drincoxyz/gmcl_rtmidi/releases).
 
 ## Documentation
 
-Documentation is maintained on the [wiki](https://github.com/drincoxyz/gmod-rtmidi/wiki).
+Documentation is maintained on the [wiki](https://github.com/drincoxyz/gmcl_rtmidi/wiki).
 
 ## License
 
