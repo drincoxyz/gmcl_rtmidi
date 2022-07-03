@@ -5,9 +5,11 @@ workspace "gmcl_rtmidi"
 	configurations { "Release", "Debug" }
 
 	filter { "platforms:x86" }
-		libdirs { "lib32" }
+		libdirs      { "lib32" }
+		architecture "x86"
 	filter { "platforms:x86_64" }
-		libdirs { "lib64" }
+		libdirs      { "lib64" }
+		architecture "x86_64"
 
 	filter { "configurations:Debug" }
 		defines  { "DEBUG", "_DEBUG" }
