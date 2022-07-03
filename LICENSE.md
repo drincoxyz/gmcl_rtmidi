@@ -1,4 +1,4 @@
-# Modified BSD License
+# BSD-3-Clause
 
 Copyright &copy; 2021-2022 Brandon Little
 

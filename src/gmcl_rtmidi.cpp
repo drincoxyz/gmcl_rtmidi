@@ -32,26 +32,29 @@
 #include "RtMidi.h"
 #include "GarrysMod/Lua/Interface.h"
 
-RtMidiIn*  midi_in;
-RtMidiOut* midi_out;
+using namespace std;
+using namespace GarrysMod::Lua;
 
-int open_port(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi, const char* should, const char* callback)
+RtMidiIn  *midiIn;
+RtMidiOut *midiOut;
+
+int openPort(ILuaBase *LUA, RtMidi *midi, const char *should, const char *callback)
 {
 	const auto port = (unsigned int)LUA->CheckNumber(1);
 
-	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushSpecial(SPECIAL_GLOB);
 		LUA->GetField(-1, "hook");
 			LUA->GetField(-1, "Run");
 				LUA->PushString(should);
 				LUA->PushNumber((double)port);
 			LUA->Call(2, 1);
-				if (LUA->IsType(-1, GarrysMod::Lua::Type::Nil) || LUA->GetBool(-1))
+				if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
 				{
 					try
 					{
 						midi->openPort(port);
 					}
-					catch (const RtMidiError& error)
+					catch (const RtMidiError &error)
 					{
 						LUA->ThrowError(error.what());
 					}
@@ -68,20 +71,20 @@ int open_port(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi, const char* should, c
 	return 0;
 }
 
-int close_port(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi, const char* should, const char* callback)
+int closePort(ILuaBase *LUA, RtMidi *midi, const char *should, const char *callback)
 {
-	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushSpecial(SPECIAL_GLOB);
 		LUA->GetField(-1, "hook");
 			LUA->GetField(-1, "Run");
 				LUA->PushString(should);
 			LUA->Call(1, 1);
-				if (LUA->IsType(-1, GarrysMod::Lua::Type::Nil) || LUA->GetBool(-1))
+				if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
 				{
 					try
 					{
 						midi->closePort();
 					}
-					catch (const RtMidiError& error)
+					catch (const RtMidiError &error)
 					{
 						LUA->ThrowError(error.what());
 					}
@@ -97,13 +100,13 @@ int close_port(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi, const char* should, 
 	return 0;
 }
 
-int is_port_open(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi)
+int isPortOpen(ILuaBase *LUA, RtMidi *midi)
 {
 	try
 	{
 		LUA->PushBool(midi->isPortOpen());
 	}
-	catch (const RtMidiError& error)
+	catch (const RtMidiError &error)
 	{
 		LUA->ThrowError(error.what());
 	}
@@ -111,13 +114,13 @@ int is_port_open(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi)
 	return 1;
 }
 
-int get_port_name(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi)
+int getPortName(ILuaBase *LUA, RtMidi *midi)
 {
 	try
 	{
 		LUA->PushString(midi->getPortName((unsigned int)LUA->CheckNumber(1)).c_str());
 	}
-	catch (const RtMidiError& error)
+	catch (const RtMidiError &error)
 	{
 		LUA->ThrowError(error.what());
 	}
@@ -125,13 +128,13 @@ int get_port_name(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi)
 	return 1;
 }
 
-int get_port_count(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi)
+int getPortCount(ILuaBase *LUA, RtMidi *midi)
 {
 	try
 	{
 		LUA->PushNumber((double)midi->getPortCount());
 	}
-	catch (const RtMidiError& error)
+	catch (const RtMidiError &error)
 	{
 		LUA->ThrowError(error.what());
 	}
@@ -139,90 +142,90 @@ int get_port_count(GarrysMod::Lua::ILuaBase* LUA, RtMidi* midi)
 	return 1;
 }
 
-LUA_FUNCTION(open_input_port)
+LUA_FUNCTION(openInputPort)
 {
-	return open_port(LUA, midi_in, "ShouldOpenMidiInputPort", "OnMidiInputPortOpened");
+	return openPort(LUA, midiIn, "ShouldOpenMIDIInputPort", "OnMIDIInputPortOpened");
 }
 
-LUA_FUNCTION(close_input_port)
+LUA_FUNCTION(closeInputPort)
 {
-	return close_port(LUA, midi_in, "ShouldCloseMidiInputPort", "OnMidiInputPortClosed");
+	return closePort(LUA, midiIn, "ShouldCloseMIDIInputPort", "OnMIDIInputPortClosed");
 }
 
-LUA_FUNCTION(is_input_port_open)
+LUA_FUNCTION(isInputPortOpen)
 {
-	return is_port_open(LUA, midi_in);
+	return isPortOpen(LUA, midiIn);
 }
 
-LUA_FUNCTION(get_input_port_name)
+LUA_FUNCTION(getInputPortName)
 {
-	return get_port_name(LUA, midi_in);
+	return getPortName(LUA, midiIn);
 }
 
-LUA_FUNCTION(get_input_port_count)
+LUA_FUNCTION(getInputPortCount)
 {
-	return get_port_count(LUA, midi_in);
+	return getPortCount(LUA, midiIn);
 }
 
-LUA_FUNCTION(open_output_port)
+LUA_FUNCTION(openOutputPort)
 {
-	return open_port(LUA, midi_out, "ShouldOpenMidiOutputPort", "OnMidiOutputPortOpened");
+	return openPort(LUA, midiOut, "ShouldOpenMIDIOutputPort", "OnMIDIOutputPortOpened");
 }
 
-LUA_FUNCTION(close_output_port)
+LUA_FUNCTION(closeOutputPort)
 {
-	return close_port(LUA, midi_out, "ShouldCloseMidiOutputPort", "OnMidiOutputPortClosed");
+	return closePort(LUA, midiOut, "ShouldCloseMIDIOutputPort", "OnMIDIOutputPortClosed");
 }
 
-LUA_FUNCTION(is_output_port_open)
+LUA_FUNCTION(isOutputPortOpen)
 {
-	return is_port_open(LUA, midi_out);
+	return isPortOpen(LUA, midiOut);
 }
 
-LUA_FUNCTION(get_output_port_name)
+LUA_FUNCTION(getOutputPortName)
 {
-	return get_port_name(LUA, midi_out);
+	return getPortName(LUA, midiOut);
 }
 
-LUA_FUNCTION(get_output_port_count)
+LUA_FUNCTION(getOutputPortCount)
 {
-	return get_port_count(LUA, midi_out);
+	return getPortCount(LUA, midiOut);
 }
 
-LUA_FUNCTION(send_message)
+LUA_FUNCTION(sendMessage)
 {
-	std::vector<unsigned char> message = { (unsigned char)LUA->CheckNumber(1) };
+	vector<unsigned char> message;
 
-	for (int i = 2; i <= LUA->Top(); i++)
+	for (int i = 1; i <= LUA->Top(); i++)
 	{
 		message.push_back((unsigned char)LUA->CheckNumber(i));
 	}
 
-	const auto size = (int)message.size();
+	const auto size = message.size();
 
-	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushSpecial(SPECIAL_GLOB);
 		LUA->GetField(-1, "hook");
 			LUA->GetField(-1, "Run");
-				LUA->PushString("ShouldSendMidiMessage");
+				LUA->PushString("ShouldSendMIDIMessage");
 
 				for (const double byte : message)
 				{
 					LUA->PushNumber(byte);
 				}
 			LUA->Call(size + 1, 1);
-				if (LUA->IsType(-1, GarrysMod::Lua::Type::Nil) || LUA->GetBool(-1))
+				if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
 				{
 					try
 					{
-						midi_out->sendMessage(&message);
+						midiOut->sendMessage(&message);
 					}
-					catch (const RtMidiError& error)
+					catch (const RtMidiError &error)
 					{
 						LUA->ThrowError(error.what());
 					}
 
 					LUA->GetField(-2, "Run");
-						LUA->PushString("OnMidiMessageSent");
+						LUA->PushString("OnMIDIMessageSent");
 
 						for (const double byte : message)
 						{
@@ -237,28 +240,28 @@ LUA_FUNCTION(send_message)
 	return 0;
 }
 
-LUA_FUNCTION(receive_message)
+LUA_FUNCTION(receiveMessage)
 {
-	std::vector<unsigned char> message;
+	vector<unsigned char> message;
 
-	for (midi_in->getMessage(&message); !message.empty(); midi_in->getMessage(&message))
+	for (midiIn->getMessage(&message); !message.empty(); midiIn->getMessage(&message))
 	{
-		const auto size = (int)message.size();
+		const auto size = message.size();
 
-		LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+		LUA->PushSpecial(SPECIAL_GLOB);
 			LUA->GetField(-1, "hook");
 				LUA->GetField(-1, "Run");
-					LUA->PushString("ShouldReceiveMidiMessage");
+					LUA->PushString("ShouldReceiveMIDIMessage");
 
 					for (const double byte : message)
 					{
 						LUA->PushNumber(byte);
 					}
 				LUA->Call(size + 1, 1);
-					if (LUA->IsType(-1, GarrysMod::Lua::Type::Nil) || LUA->GetBool(-1))
+					if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1))
 					{
 						LUA->GetField(-2, "Run");
-							LUA->PushString("OnMidiMessageReceived");
+							LUA->PushString("OnMIDIMessageReceived");
 
 							for (const double byte : message)
 							{
@@ -278,45 +281,45 @@ GMOD_MODULE_OPEN()
 {
 	try
 	{
-		midi_in  = new RtMidiIn();
-		midi_out = new RtMidiOut();
+		midiIn  = new RtMidiIn();
+		midiOut = new RtMidiOut();
 	}
-	catch (const RtMidiError& error)
+	catch (const RtMidiError &error)
 	{
 		LUA->ThrowError(error.what());
 	}
 
-	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushSpecial(SPECIAL_GLOB);
 		LUA->GetField(-1, "hook");
 			LUA->GetField(-1, "Add");
 				LUA->PushString("Think");
-				LUA->PushString("MidiReceiveMessage");
-				LUA->PushCFunction(receive_message);
+				LUA->PushString("ReceiveMIDIMessage");
+				LUA->PushCFunction(receiveMessage);
 			LUA->Call(3, 0);
 		LUA->Pop();
 
 		LUA->CreateTable();
-			LUA->PushCFunction(open_input_port);
+			LUA->PushCFunction(openInputPort);
 			LUA->SetField(-2, "OpenInputPort");
-			LUA->PushCFunction(close_input_port);
+			LUA->PushCFunction(closeInputPort);
 			LUA->SetField(-2, "CloseInputPort");
-			LUA->PushCFunction(is_input_port_open);
+			LUA->PushCFunction(isInputPortOpen);
 			LUA->SetField(-2, "IsInputPortOpen");
-			LUA->PushCFunction(get_input_port_name);
+			LUA->PushCFunction(getInputPortName);
 			LUA->SetField(-2, "GetInputPortName");
-			LUA->PushCFunction(get_input_port_count);
+			LUA->PushCFunction(getInputPortCount);
 			LUA->SetField(-2, "GetInputPortCount");
-			LUA->PushCFunction(open_output_port);
+			LUA->PushCFunction(openOutputPort);
 			LUA->SetField(-2, "OpenOutputPort");
-			LUA->PushCFunction(close_output_port);
+			LUA->PushCFunction(closeOutputPort);
 			LUA->SetField(-2, "CloseOutputPort");
-			LUA->PushCFunction(is_output_port_open);
+			LUA->PushCFunction(isOutputPortOpen);
 			LUA->SetField(-2, "IsOutputPortOpen");
-			LUA->PushCFunction(get_output_port_name);
+			LUA->PushCFunction(getOutputPortName);
 			LUA->SetField(-2, "GetOutputPortName");
-			LUA->PushCFunction(get_output_port_count);
+			LUA->PushCFunction(getOutputPortCount);
 			LUA->SetField(-2, "GetOutputPortCount");
-			LUA->PushCFunction(send_message);
+			LUA->PushCFunction(sendMessage);
 			LUA->SetField(-2, "SendMessage");
 		LUA->SetField(-2, "rtmidi");
 	LUA->Pop();
@@ -328,15 +331,15 @@ GMOD_MODULE_CLOSE()
 {
 	try
 	{
-		delete midi_in;
-		delete midi_out;
+		delete midiIn;
+		delete midiOut;
 	}
-	catch (const RtMidiError& error)
+	catch (const RtMidiError &error)
 	{
 		LUA->ThrowError(error.what());
 	}
 
-	LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
+	LUA->PushSpecial(SPECIAL_GLOB);
 		LUA->GetField(-1, "hook");
 			LUA->GetField(-1, "Remove");
 				LUA->PushString("Think");

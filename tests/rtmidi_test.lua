@@ -1,51 +1,51 @@
 require "rtmidi"
 
-hook.Add("OnMidiMessageSent", "test", function(...)
-	print("OnMidiMessageSent", ...)
+hook.Add("OnMIDIMessageSent", "test", function(...)
+	print("OnMIDIMessageSent", ...)
 end)
 
-hook.Add("OnMidiMessageReceived", "test", function(...)
-	print("OnMidiMessageReceived", ...)
+hook.Add("OnMIDIMessageReceived", "test", function(...)
+	print("OnMIDIMessageReceived", ...)
 end)
 
-hook.Add("OnMidiInputPortOpened", "test", function(...)
-	print("OnMidiInputPortOpened", ...)
+hook.Add("OnMIDIInputPortOpened", "test", function(...)
+	print("OnMIDIInputPortOpened", ...)
 end)
 
-hook.Add("OnMidiInputPortClosed", "test", function(...)
-	print("OnMidiInputPortClosed", ...)
+hook.Add("OnMIDIInputPortClosed", "test", function(...)
+	print("OnMIDIInputPortClosed", ...)
 end)
 
-hook.Add("OnMidiOutputPortOpened", "test", function(...)
-	print("OnMidiOutputPortOpened", ...)
+hook.Add("OnMIDIOutputPortOpened", "test", function(...)
+	print("OnMIDIOutputPortOpened", ...)
 end)
 
-hook.Add("OnMidiOutputPortClosed", "test", function(...)
-	print("OnMidiOutputPortClosed", ...)
+hook.Add("OnMIDIOutputPortClosed", "test", function(...)
+	print("OnMIDIOutputPortClosed", ...)
 end)
 
-hook.Add("ShouldSendMidiMessage", "test", function(...)
-	print("ShouldSendMidiMessage", ...)
+hook.Add("ShouldSendMIDIMessage", "test", function(...)
+	print("ShouldSendMIDIMessage", ...)
 end)
 
-hook.Add("ShouldReceiveMidiMessage", "test", function(...)
-	print("ShouldReceiveMidiMessage", ...)
+hook.Add("ShouldReceiveMIDIMessage", "test", function(...)
+	print("ShouldReceiveMIDIMessage", ...)
 end)
 
-hook.Add("ShouldOpenMidiInputPort", "test", function(...)
-	print("ShouldOpenMidiInputPort", ...)
+hook.Add("ShouldOpenMIDIInputPort", "test", function(...)
+	print("ShouldOpenMIDIInputPort", ...)
 end)
 
-hook.Add("ShouldCloseMidiInputPort", "test", function(...)
-	print("ShouldCloseMidiInputPort", ...)
+hook.Add("ShouldCloseMIDIInputPort", "test", function(...)
+	print("ShouldCloseMIDIInputPort", ...)
 end)
 
-hook.Add("ShouldOpenMidiOutputPort", "test", function(...)
-	print("ShouldOpenMidiOutputPort", ...)
+hook.Add("ShouldOpenMIDIOutputPort", "ttest", function(...)
+	print("ShouldOpenMIDIOutputPort", ...)
 end)
 
-hook.Add("ShouldCloseMidiOutputPort", "test", function(...)
-	print("ShouldCloseMidiOutputPort", ...)
+hook.Add("ShouldCloseMIDIOutputPort", "test", function(...)
+	print("ShouldCloseMIDIOutputPort", ...)
 end)
 
 concommand.Add("rtmidi_send_message", function(player, command, arguments)
