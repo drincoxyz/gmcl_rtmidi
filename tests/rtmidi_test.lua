@@ -1,93 +1,80 @@
 require "rtmidi"
 
-hook.Add("OnMIDIMessageSent", "test", function(...)
+hook.Add("OnMIDIMessageSent", "rtmidi_test", function(...)
 	print("OnMIDIMessageSent", ...)
 end)
-
-hook.Add("OnMIDIMessageReceived", "test", function(...)
+hook.Add("OnMIDIMessageReceived", "rtmidi_test", function(...)
 	print("OnMIDIMessageReceived", ...)
 end)
-
-hook.Add("OnMIDIInputPortOpened", "test", function(...)
+hook.Add("OnMIDIInputPortOpened", "rtmidi_test", function(...)
 	print("OnMIDIInputPortOpened", ...)
 end)
-
-hook.Add("OnMIDIInputPortClosed", "test", function(...)
+hook.Add("OnMIDIInputPortClosed", "rtmidi_test", function(...)
 	print("OnMIDIInputPortClosed", ...)
 end)
-
-hook.Add("OnMIDIOutputPortOpened", "test", function(...)
+hook.Add("OnMIDIOutputPortOpened", "rtmidi_test", function(...)
 	print("OnMIDIOutputPortOpened", ...)
 end)
-
-hook.Add("OnMIDIOutputPortClosed", "test", function(...)
+hook.Add("OnMIDIOutputPortClosed", "rtmidi_test", function(...)
 	print("OnMIDIOutputPortClosed", ...)
 end)
-
-hook.Add("ShouldSendMIDIMessage", "test", function(...)
+hook.Add("ShouldSendMIDIMessage", "rtmidi_test", function(...)
 	print("ShouldSendMIDIMessage", ...)
 end)
-
-hook.Add("ShouldReceiveMIDIMessage", "test", function(...)
+hook.Add("ShouldReceiveMIDIMessage", "rtmidi_test", function(...)
 	print("ShouldReceiveMIDIMessage", ...)
 end)
-
-hook.Add("ShouldOpenMIDIInputPort", "test", function(...)
+hook.Add("ShouldOpenMIDIInputPort", "rtmidi_test", function(...)
 	print("ShouldOpenMIDIInputPort", ...)
 end)
-
-hook.Add("ShouldCloseMIDIInputPort", "test", function(...)
+hook.Add("ShouldCloseMIDIInputPort", "rtmidi_test", function(...)
 	print("ShouldCloseMIDIInputPort", ...)
 end)
-
-hook.Add("ShouldOpenMIDIOutputPort", "ttest", function(...)
+hook.Add("ShouldOpenMIDIOutputPort", "rtmidi_test", function(...)
 	print("ShouldOpenMIDIOutputPort", ...)
 end)
-
-hook.Add("ShouldCloseMIDIOutputPort", "test", function(...)
+hook.Add("ShouldCloseMIDIOutputPort", "rtmidi_test", function(...)
 	print("ShouldCloseMIDIOutputPort", ...)
 end)
 
-concommand.Add("rtmidi_send_message", function(player, command, arguments)
-	print(rtmidi.SendMessage(unpack(arguments)))
-end)
-
-concommand.Add("rtmidi_open_input_port", function(player, command, arguments)
-	print(rtmidi.OpenInputPort(unpack(arguments)))
-end)
-
-concommand.Add("rtmidi_close_input_port", function(player, command, arguments)
-	print(rtmidi.CloseInputPort(unpack(arguments)))
-end)
-
-concommand.Add("rtmidi_is_input_port_open", function(player, command, arguments)
+concommand.Add("rtmidi_IsInputPortOpen", function(player, command, arguments)
 	print(rtmidi.IsInputPortOpen(unpack(arguments)))
 end)
-
-concommand.Add("rtmidi_get_input_port_name", function(player, command, arguments)
-	print(rtmidi.GetInputPortName(unpack(arguments)))
-end)
-
-concommand.Add("rtmidi_get_input_port_count", function(player, command, arguments)
+concommand.Add("rtmidi_GetInputPortCount", function(player, command, arguments)
 	print(rtmidi.GetInputPortCount(unpack(arguments)))
 end)
-
-concommand.Add("rtmidi_open_output_port", function(player, command, arguments)
-	print(rtmidi.OpenOutputPort(unpack(arguments)))
+concommand.Add("rtmidi_GetInputPortName", function(player, command, arguments)
+	print(rtmidi.GetInputPortName(unpack(arguments)))
 end)
-
-concommand.Add("rtmidi_close_output_port", function(player, command, arguments)
-	print(rtmidi.CloseOutputPort(unpack(arguments)))
+concommand.Add("rtmidi_CloseInputPort", function(player, command, arguments)
+	print(rtmidi.CloseInputPort(unpack(arguments)))
 end)
-
-concommand.Add("rtmidi_is_output_port_open", function(player, command, arguments)
+concommand.Add("rtmidi_OpenInputPort", function(player, command, arguments)
+	print(rtmidi.OpenInputPort(unpack(arguments)))
+end)
+concommand.Add("rtmidi_IsOutputPortOpen", function(player, command, arguments)
 	print(rtmidi.IsOutputPortOpen(unpack(arguments)))
 end)
-
-concommand.Add("rtmidi_get_output_port_name", function(player, command, arguments)
+concommand.Add("rtmidi_GetOutputPortCount", function(player, command, arguments)
+	print(rtmidi.GetOutputPortCount(unpack(arguments)))
+end)
+concommand.Add("rtmidi_GetOutputPortName", function(player, command, arguments)
 	print(rtmidi.GetOutputPortName(unpack(arguments)))
 end)
-
-concommand.Add("rtmidi_get_output_port_count", function(player, command, arguments)
-	print(rtmidi.GetOutputPortCount(unpack(arguments)))
+concommand.Add("rtmidi_CloseOutputPort", function(player, command, arguments)
+	print(rtmidi.CloseOutputPort(unpack(arguments)))
+end)
+concommand.Add("rtmidi_OpenOutputPort", function(player, command, arguments)
+	print(rtmidi.OpenOutputPort(unpack(arguments)))
+end)
+concommand.Add("rtmidi_SendMessage", function(player, command, arguments)
+	print(rtmidi.SendMessage(unpack(arguments)))
+end)
+concommand.Add("rtmidi_dump_ports", function(player, command, arguments)
+	for port = 0, rtmidi.GetInputPortCount() - 1 do
+		print("IN:", port, rtmidi.GetInputPortName(port))
+	end
+	for port = 0, rtmidi.GetOutputPortCount() - 1 do
+		print("OUT:", port, rtmidi.GetOutputPortName(port))
+	end
 end)
