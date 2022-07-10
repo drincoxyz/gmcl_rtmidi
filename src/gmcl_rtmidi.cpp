@@ -150,7 +150,7 @@ LUA_FUNCTION(sendMessage) {
 	try {
 		vector<unsigned char> message;
 
-		for (int i = 0; i < LUA->Top(); ++i) {
+		for (int i = 1; i <= LUA->Top(); i++) {
 			message.push_back((unsigned char)LUA->CheckNumber(i));
 		}
 
