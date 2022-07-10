@@ -42,6 +42,7 @@ workspace "gmcl_rtmidi"
 project "rtmidi"
 	language "C++"
 	kind "StaticLib"
+	pic "On"
 	files { "src/RtMidi.cpp" }
 
 	filter "configurations:Debug"
@@ -65,8 +66,9 @@ project "rtmidi"
 project "gmcl_rtmidi"
 	language "C++"
 	kind "SharedLib"
-	links { "rtmidi" }
+	pic "On"
 	files { "src/gmcl_rtmidi.cpp" }
+	links { "rtmidi" }
 	targetprefix "gmcl_"
 	targetname "rtmidi"
 	targetextension ".dll"
