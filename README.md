@@ -14,4 +14,4 @@ Documentation is maintained on the [wiki](https://github.com/drincoxyz/gmcl_rtmi
 
 This is licensed under the [BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html), which is provided in [LICENSE.md](LICENSE.md).
 
-[RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/) is licensed under a modified version of the [MIT](https://spdx.org/licenses/MIT.html), which is provided in [LICENSE.RtMidi.txt](LICENSE.RTMidi.txt).
+[RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/) is licensed under a modified version of the [MIT](https://spdx.org/licenses/MIT.html), which is provided in [LICENSE.RtMidi.txt](LICENSE.RtMidi.txt).
