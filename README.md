@@ -8,7 +8,7 @@ Compiled binaries are available from [releases](https://github.com/drincoxyz/gmc
 
 ## Documentation
 
-Documentation is maintained on the [wiki](https://github.com/drincoxyz/gmcl_rtmidi/releases).
+Documentation is maintained on the [wiki](https://github.com/drincoxyz/gmcl_rtmidi/wiki).
 
 ## License
 
