@@ -1,5 +1,5 @@
 /*
-	gmcl_rtmidi: real-time MIDI I/O for Garry's Mod
+	gmcl_rtmidi: realtime MIDI I/O for Garry's Mod
 	Copyright (c) 2021-2022 Brandon Little
 
 	Redistribution and use in source and binary forms, with or without
@@ -64,18 +64,18 @@ int getPortName(ILuaBase* LUA, RtMidi* midi) {
 	}
 	return 1;
 }
-int closePort(ILuaBase* LUA, RtMidi* midi, const char* should, const char* callback) {
+int closePort(ILuaBase* LUA, RtMidi* midi, const char* before, const char* after) {
 	try {
 		LUA->PushSpecial(SPECIAL_GLOB);
 			LUA->GetField(-1, "hook");
 				LUA->GetField(-1, "Run");
-					LUA->PushString(should);
+					LUA->PushString(before);
 				LUA->Call(1, 1);
 					if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1)) {
 						midi->closePort();
 
 						LUA->GetField(-2, "Run");
-							LUA->PushString(callback);
+							LUA->PushString(after);
 						LUA->Call(1, 0);
 					}
 				LUA->Pop();
@@ -87,21 +87,21 @@ int closePort(ILuaBase* LUA, RtMidi* midi, const char* should, const char* callb
 	}
 	return 0;
 }
-int openPort(ILuaBase* LUA, RtMidi* midi, const char* should, const char* callback) {
+int openPort(ILuaBase* LUA, RtMidi* midi, const char* before, const char* after) {
 	try {
 		const auto port = LUA->CheckNumber(1);
 
 		LUA->PushSpecial(SPECIAL_GLOB);
 			LUA->GetField(-1, "hook");
 				LUA->GetField(-1, "Run");
-					LUA->PushString(should);
+					LUA->PushString(before);
 					LUA->PushNumber(port);
 				LUA->Call(2, 1);
 					if (LUA->IsType(-1, Type::Nil) || LUA->GetBool(-1)) {
 						midi->openPort((unsigned int)port);
 
 						LUA->GetField(-2, "Run");
-							LUA->PushString(callback);
+							LUA->PushString(after);
 							LUA->PushNumber(port);
 						LUA->Call(2, 0);
 					}
@@ -145,7 +145,6 @@ LUA_FUNCTION(closeOutputPort) {
 LUA_FUNCTION(openOutputPort) {
 	return openPort(LUA, midiOut, "ShouldOpenMIDIInputPort", "OnMIDIInputPortOpened");
 }
-
 LUA_FUNCTION(sendMessage) {
 	try {
 		vector<unsigned char> message;
