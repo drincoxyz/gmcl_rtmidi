@@ -1,4 +1,3 @@
-
 RtMidi: realtime MIDI i/o C++ classes
 Copyright (c) 2003-2021 Gary P. Scavone
 

@@ -1,7 +1,8 @@
-*.*
-!*.h
-!*.cpp
-!*.lua
-!/*.md
-!/*.txt
-!.gitignore
+/**
+!/.gitignore
+!/README*
+!/LICENSE*
+!/premake*.lua
+!/src**.cpp
+!/include**.h
+!/tests**.lua
